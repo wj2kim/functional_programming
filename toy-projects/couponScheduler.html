@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Coupon Scheduler</title>
+    <script src="../fx.js"></script>
+  </head>
+  <body>
+    <script>
+      //prettier-ignore
+
+      /*
+
+      함수형 프로그래밍 연습
+
+      제목: 5초에 한번씩 실행되는 배치 스케쥴러
+
+      이용자가 쿠폰을 구매 할 시 해당 구매 요청을 시작으로 응답까지의
+      속도를 줄이고자 이용자의 매개체로 부터 쿠폰 서버까지 직접 통신을
+      하는 것이 아닌, 중간에 있는 선 발급서버에서 미리 발급 받은 쿠폰을
+      이용하게 끔 만드는 로직.
+
+      상품 당 최대 10개의 쿠폰을 미리 발급 받아 놓은 후 5초에 한번씩 빈 갯수 만큼
+      채우는 스케쥴러.
+
+      */
+
+      const Scheduler = {
+
+        couponInAdvance : {
+          starbucks :
+            [
+              { coupon_id: "stb123", company: "starbucks", price: 4100 },
+              { coupon_id: "stb124", company: "starbucks", price: 4100 },
+              { coupon_id: "stb125", company: "starbucks", price: 4100 },
+              { coupon_id: "stb126", company: "starbucks", price: 4100 },
+              { coupon_id: "stb127", company: "starbucks", price: 4100 },
+              { coupon_id: "stb128", company: "starbucks", price: 4100 },
+              { coupon_id: "stb129", company: "starbucks", price: 4100 },
+              { coupon_id: "stb130", company: "starbucks", price: 4100 },
+              { coupon_id: "stb131", company: "starbucks", price: 4100 },
+              { coupon_id: "stb132", company: "starbucks", price: 4100 },
+            ],
+
+          outback :
+            [
+              { coupon_id: "obk99", company: "outback", price: 26000 },
+              { coupon_id: "obk100", company: "outback", price: 26000 },
+              { coupon_id: "obk101", company: "outback", price: 26000 },
+              { coupon_id: "obk102", company: "outback", price: 26000 },
+              { coupon_id: "obk103", company: "outback", price: 26000 },
+              { coupon_id: "obk104", company: "outback", price: 26000 },
+              { coupon_id: "obk105", company: "outback", price: 26000 },
+              { coupon_id: "obk106", company: "outback", price: 26000 },
+              { coupon_id: "obk107", company: "outback", price: 26000 },
+              { coupon_id: "obk108", company: "outback", price: 26000 },
+            ],
+
+          gamjatang :
+            [
+              { coupon_id: "gjt250", company: "gamjatangjip", price: 6000 },
+              { coupon_id: "gjt251", company: "gamjatangjip", price: 6000 },
+              { coupon_id: "gjt252", company: "gamjatangjip", price: 6000 },
+              { coupon_id: "gjt253", company: "gamjatangjip", price: 6000 },
+              { coupon_id: "gjt254", company: "gamjatangjip", price: 6000 },
+              { coupon_id: "gjt255", company: "gamjatangjip", price: 6000 },
+              { coupon_id: "gjt256", company: "gamjatangjip", price: 6000 },
+              { coupon_id: "gjt257", company: "gamjatangjip", price: 6000 },
+              { coupon_id: "gjt258", company: "gamjatangjip", price: 6000 },
+              { coupon_id: "gjt259", company: "gamjatangjip", price: 6000 },
+            ],
+        },
+        maxNumOfCoupon: 10,
+
+        requestCoupon : (request = []) => {
+          (!request || request.length <= 0) ?  console.log('요청 값 없음') : console.log(request, '만큼 요청 함') ;
+         // DB 나 서버에 쿠폰 요청을 하면 된다.
+        }
+      };
+
+      //prettier-ignore
+
+      const removeCoupon = (company, num) => {
+        // 임시용
+        for (let i = 0; i < num; i++) {
+          Scheduler.couponInAdvance[company].shift();
+        }
+      };
+
+      L.entries = function* (obj) {
+        for (const k in obj) {
+          yield [k, obj[k].length];
+        }
+      };
+
+      const jobScheduler = async () => {
+        await _.go(
+          Scheduler.couponInAdvance,
+          L.entries,
+          L.filter(([_, v]) => Scheduler.maxNumOfCoupon > v),
+          L.map(([k, v]) => ({ [k]: Scheduler.maxNumOfCoupon - v })),
+          _.reduce(Object.assign),
+          Scheduler.requestCoupon
+        );
+      };
+
+      (function recur() {
+        Promise.all([
+          _.delay(5000, undefined), // 5 초에 한번씩 
+          jobScheduler(),
+        ]).then(recur);
+      })();
+
+      //   L.filter(({length}) => Scheduler.maximumCoupon > length),
+
+      // const object = (entries) =>
+      //   _.go(
+      //     entries,
+      //     L.map(([k, v]) => ({ [k]: v })),
+      //     _.reduce(Object.assign)
+      //   );
+
+      // console.log(object(Scheduler.couponInAdvance['starbucks']));
+
+      // ._go(
+      //   Scheduler.couponInAdvance,
+      //   console.log,
+      //   L.map(c => console.log(c)),
+      // );
+
+      //   removeCoupon: (companyId, couponId) => {
+      //   _.go(
+      //     Scheduler.getCouponByCompany(companyId),
+      //     _.flat,
+      //     _.filter( ({coupon_id}) => coupon_id !== couponId ),
+      //   )
+      // }
+
+      // console.log(Scheduler.removeCoupon(3, "gjt250"));
+      // console.log(Scheduler.couponInAdvance);
+
+      // const couponUsed = {
+      //   removeCoupon1: (ids) => [
+      //     { couponId: "stb123" },
+      //     { couponId: "gjt250" },
+      //   ],
+      //   removeCoupon2: (ids) => [{ couponId: "obk99" }],
+      //   removeCoupon3: (ids) => [{ couponId: "stb124" }],
+      //   removeCoupon4: (ids) => [{ couponId: "stb125" }],
+      //   removeCoupon5: (ids) => [{ couponId: "obk100" }],
+      // };
+
+      // const indexBy = (coupon) => {
+      //   _.go(
+      //     _.indexBy((c) => c.company, coupon),
+      //     console.log
+      //   );
+      // };
+
+      // _.go(
+      //   L.range(1, Infinity),
+      //   L.map(Scheduler.getCouponByCompany),
+      //   L.takeWhile((_) => _),
+      //   L.filter(({length}) => Scheduler.maximumCoupon > length),
+      //   _.map((c) => console.log([ , c.length ])),
+      // _.map((c) => `${c[0].company} ${Scheduler.maximumCoupon - c.length}`),
+      // console.log
+
+      // _.indexBy((c) => c.company),
+      // _.map((c) => indexBy(c)),
+      // _.each(console.log),
+      // console.log
+      // _.reduce()
+
+      // _.flat,
+      // console.log
+      // );
+
+      // const allCoupons = _.go(
+      //   L.range(1, Infinity),
+      //   L.map((i) => Scheduler.getCouponByCompany[i]),
+      //   L.takeWhile((_) => _),
+      //   // _.each(console.log),
+      //   _.flat,
+      //   console.log
+      // );
+
+      // console.log(_.indexBy((c) => c.coupon_id, allCoupons));
+
+      // const requestCoupon = (coupons) => {
+      //   _
+      //     .go
+      //     // _.each(console.log)
+      //     // DB 나 다른 서버에 필요 한 만큼의 쿠폰 요청
+      //     ();
+      // };
+
+      // L.values = function* (obj) {
+      //   for (const k in obj) {
+      //     yield obj[k];
+      //   }
+      // };
+
+      // _.go(
+      //   allCoupons,
+      // );
+      // console.log,
+      // _.map((c) => console.log(c)),
+
+      // _.filter((c) => )
+      // _.each(console.log)
+      // L.filter((v) => v.length < Scheduler.maximumCoupon),
+      // console.log
+      // _.each(console.log)
+      // L.filter( (c) => c.length < Scheduler.maximumCoupon ),
+      // _.each(console.log)
+      // _.each(_.filter((c) => c.length < Scheduler.maximumCoupon)),
+
+      // _.each(console.log)
+      // L.filter((v) => v.length < Scheduler.maximumCoupon),
+      // _.reduce(),
+      // L.map((c) => requestCoupon(c))
+
+      //   const scheduler = async () => {
+      /*
+        선 발급 쿠폰 정보들을 모두 가직 온다,
+        가맹점 이름 단위로 나누어져 있지만 하나로 합친다.
+        */
+
+      // const payments = _.go(
+      //   L.range(1, Infinity),
+      //   L.map(Scheduler.getCouponByCompany),
+      //   L._.flat
+      // );
+
+      // console.log(payments);
+
+      //   console.log(allCoupons);
+
+      //prettier-ignore
+
+      //   await _.go(
+      //       allCoupons,
+      //       _.each(console.log)
+      //       )
+      //   };
+    </script>
+  </body>
+</html>
